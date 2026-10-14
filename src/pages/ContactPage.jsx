@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Mail, ArrowRight, CheckCircle2, MessageCircle, Music2, Send, CreditCard} from 'lucide-react';
+import {Mail, ArrowRight, CheckCircle2, MessageCircle, Music2, Send} from 'lucide-react';
 const EMAIL='godfirstgiftshopworldwide@gmail.com';
 const WHATSAPP='https://wa.me/233277031930?text=';
 export default function ContactPage({notify}) {
@@ -11,7 +11,6 @@ export default function ContactPage({notify}) {
  <a className="contact-channel" href={`mailto:${EMAIL}`}><span><Mail/></span><div><b>Email</b><small>{EMAIL}</small></div><ArrowRight size={15}/></a>
  <a className="contact-channel" href={WHATSAPP} target="_blank" rel="noreferrer"><span><MessageCircle/></span><div><b>WhatsApp</b><small>Chat with us about gifts and orders</small></div><ArrowRight size={15}/></a>
  <a className="contact-channel" href="https://www.tiktok.com/@godfirstomobn5" target="_blank" rel="noreferrer"><span><Music2/></span><div><b>TikTok</b><small>@godfirstomobn5</small></div><ArrowRight size={15}/></a>
- <a className="contact-channel" href="https://t.me/godfirstomobn" target="_blank" rel="noreferrer"><span><Send/></span><div><b>Telegram</b><small>@godfirstomobn</small></div><ArrowRight size={15}/></a>
- <div className="contact-payment-note"><CreditCard size={18}/><div><b>Bank transfer</b><small>Confirm the amount and account details with us through an official contact channel before paying.</small><strong>OPay Digital Services Limited</strong><strong>Account number: 7058805238</strong></div></div>
+ <a className="contact-channel" href="https://t.me/godfirst5451" target="_blank" rel="noreferrer"><span><Send/></span><div><b>Telegram</b><small>@godfirst5451</small></div><ArrowRight size={15}/></a>
  </aside><form className="contact-form" onSubmit={submit}><div className="contact-form-heading"><p className="eyebrow">SEND AN ENQUIRY</p><h2>How can we help?</h2><p>Complete the details below. Your email app opens with the message details filled in.</p></div><div className="form-two"><label>Your name<input name="name" value={form.name} onChange={change} required placeholder="Full name"/></label><label>Email address<input name="email" type="email" value={form.email} onChange={change} required placeholder="you@example.com"/></label></div><div className="form-two"><label>What is this about?<select name="topic" value={form.topic} onChange={change}><option>Gift enquiry</option><option>Order support</option><option>Delivery question</option><option>Payment confirmation</option><option>Custom gift</option><option>Other service</option></select></label><label>Order reference <span className="optional-label">Optional</span><input name="order" value={form.order} onChange={change} placeholder="e.g. GFG-123456"/></label></div><label>Your message<textarea name="message" value={form.message} onChange={change} required rows="5" placeholder="How can we help?"/></label><button className="btn btn-primary" type="submit">Prepare email enquiry <ArrowRight size={16}/></button>{sent&&<p className="form-note"><CheckCircle2 size={16}/> Review the email draft and press Send to contact us.</p>}</form></div></main>;
 }

@@ -24,8 +24,8 @@ export default function HomePage({ categories, products, categoryName, go, openC
       <div className="hero-visual" aria-label="Gift inspiration">
         <div className="hero-image-backdrop" />
         <div className="hero-main-photo"><img src="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=1100&q=90" alt="Beautifully wrapped gift box" /></div>
-        <div className="hero-photo-card hero-photo-card-top"><img src="https://images.unsplash.com/photo-1494972308805-463bc619d34e?auto=format&fit=crop&w=600&q=85" alt="Bouquet of flowers" /><span>For their special day</span></div>
-        <div className="hero-photo-card hero-photo-card-bottom"><img src="/images/hero-cake.jpeg" alt="White celebration cake with colourful sprinkles" /><span>Little things, big meaning</span></div>
+        <div className="hero-photo-card hero-photo-card-top"><img src="/images/hero-flowers.jpeg" alt="Bouquet of red roses and carnations" /><span>For their special day</span></div>
+        <div className="hero-photo-card hero-photo-card-bottom"><img src="/images/hero-cake.jpeg" alt="White celebration cake with colourful sprinkles" /><span>Sweet moments, made special</span></div>
         <div className="hero-floating-card"><Gift size={19}/><span><b>Make them feel remembered</b><small>Whatever the distance</small></span></div>
       </div>
       <div className="hero-index"><span>01</span><i/><span>THOUGHTFUL GIFTING, MADE EASIER</span></div>

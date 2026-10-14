@@ -10,7 +10,7 @@ export default function Footer({ go }) {
           <span className="brand-mark"><Gift size={23}/></span><span><b>GOD FIRST</b><i>Gift Shop Worldwide</i></span>
         </button>
         <p>Godfirstgiftshopworldwide helps you celebrate, comfort and surprise the people who matter, wherever they are.</p>
-        <div className="footer-promise"><HeartHandshake size={17}/><span>Made for thoughtful giving</span></div><div className="footer-socials" aria-label="Social and contact links"><a href="mailto:godfirstgiftshopworldwide@gmail.com" aria-label="Email"><Mail size={16}/></a><a href="https://wa.me/233277031930?text=" target="_blank" rel="noreferrer" aria-label="WhatsApp"><MessageCircle size={16}/></a><a href="https://www.tiktok.com/@godfirstomobn5" target="_blank" rel="noreferrer" aria-label="TikTok"><Music2 size={16}/></a><a href="https://t.me/godfirstomobn" target="_blank" rel="noreferrer" aria-label="Telegram"><Send size={16}/></a></div>
+        <div className="footer-promise"><HeartHandshake size={17}/><span>Made for thoughtful giving</span></div><div className="footer-socials" aria-label="Social and contact links"><a href="mailto:godfirstgiftshopworldwide@gmail.com" aria-label="Email"><Mail size={16}/></a><a href="https://wa.me/233277031930?text=" target="_blank" rel="noreferrer" aria-label="WhatsApp"><MessageCircle size={16}/></a><a href="https://www.tiktok.com/@godfirstomobn5" target="_blank" rel="noreferrer" aria-label="TikTok"><Music2 size={16}/></a><a href="https://t.me/godfirst5451" target="_blank" rel="noreferrer" aria-label="Telegram"><Send size={16}/></a></div>
       </section>
       <nav className="footer-column" aria-label="Explore the store">
         <h4>Explore</h4>

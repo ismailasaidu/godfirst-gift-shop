@@ -4,7 +4,11 @@ import { SERVICES, SERVICE_IMAGES } from '../data/catalog.js';
 
 // Existing store WhatsApp contact used elsewhere on the website.
 const OWNER_WHATSAPP = '233277031930';
-const serviceMessage = (name) => `Hello God First Gift Shop Worldwide, I would like to enquire about your ${name} service. Please share the pricing, requirements, and next steps. Thank you.`;
+const serviceMessage = (name) => name === 'Gift Package Delivery'
+  ? "Hello, God First Gift Shop Worldwide! I’m interested in your gift delivery services and support. Could you please let me know the requirements and how to get started? Thank you"
+  : name === 'Online Banking Website Services'
+    ? 'Hello God First Gift Shop Worldwide, I would like to enquire about your Online Banking Website service. Please share the pricing, requirements, and next steps. Thank you.'
+    : `Hello God First Gift Shop Worldwide, I would like to enquire about your ${name} service. Please share the pricing, requirements, and next steps. Thank you.`;
 
 export default function ServicesPage() {
   return <main className="container page-main">
