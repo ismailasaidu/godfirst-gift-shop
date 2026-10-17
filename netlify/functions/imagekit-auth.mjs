@@ -17,12 +17,20 @@ export default async function handler(request) {
   }
 
   const projectId = (process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID || '').trim();
-  // IMAGEKIT_ADMIN_EMAIL is preferred. VITE_ADMIN_EMAIL is a non-secret email identifier
-  // already used by this project and makes local setup less error-prone.
-  const adminEmail = (process.env.IMAGEKIT_ADMIN_EMAIL || process.env.VITE_ADMIN_EMAIL || '').trim().toLowerCase();
+  // Accept a comma-separated allowlist. Keep the legacy single-email variables
+  // working so existing Netlify deployments do not break during migration.
+  const adminEmails = [
+    process.env.IMAGEKIT_ADMIN_EMAILS,
+    process.env.IMAGEKIT_ADMIN_EMAIL,
+    process.env.VITE_ADMIN_EMAIL,
+  ]
+    .filter(Boolean)
+    .flatMap(value => value.split(','))
+    .map(value => value.trim().toLowerCase())
+    .filter(Boolean);
   const privateKey = process.env.IMAGEKIT_PRIVATE_KEY;
-  if (!projectId || !adminEmail || !privateKey) {
-    return new Response(JSON.stringify({ error: `Image uploads are not configured. Missing ${[!projectId ? 'FIREBASE_PROJECT_ID (or VITE_FIREBASE_PROJECT_ID)' : '', !adminEmail ? 'IMAGEKIT_ADMIN_EMAIL (or VITE_ADMIN_EMAIL)' : '', !privateKey ? 'IMAGEKIT_PRIVATE_KEY' : ''].filter(Boolean).join(', ')}. Add the missing variable to your local .env file and restart netlify dev.` }), {
+  if (!projectId || adminEmails.length === 0 || !privateKey) {
+    return new Response(JSON.stringify({ error: `Image uploads are not configured. Missing ${[!projectId ? 'FIREBASE_PROJECT_ID (or VITE_FIREBASE_PROJECT_ID)' : '', adminEmails.length === 0 ? 'IMAGEKIT_ADMIN_EMAILS (or legacy IMAGEKIT_ADMIN_EMAIL / VITE_ADMIN_EMAIL)' : '', !privateKey ? 'IMAGEKIT_PRIVATE_KEY' : ''].filter(Boolean).join(', ')}. Check the linked Netlify environment variables and restart netlify dev.` }), {
       status: 503,
       headers: jsonHeaders,
     });
@@ -42,8 +50,8 @@ export default async function handler(request) {
     // Project ID is public configuration; the ImageKit private key remains server-only.
     const app = getApps()[0] || initializeApp({ projectId });
     const decoded = await getAuth(app).verifyIdToken(idToken);
-    if (!decoded.email || decoded.email.toLowerCase() !== adminEmail) {
-      return new Response(JSON.stringify({ error: 'Only the configured store administrator can upload product photos.' }), {
+    if (!decoded.email || !adminEmails.includes(decoded.email.trim().toLowerCase())) {
+      return new Response(JSON.stringify({ error: 'This email is not in the configured ImageKit admin allowlist. Add it to IMAGEKIT_ADMIN_EMAILS in Netlify and redeploy.' }), {
         status: 403,
         headers: jsonHeaders,
       });
