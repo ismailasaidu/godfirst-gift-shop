@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /account
+Disallow: /checkout
+Disallow: /cart
+Disallow: /wishlist
+Disallow: /track-order
+Disallow: /order-confirmation
+Sitemap: https://godfirstgiftshopworldwide.com/sitemap.xml

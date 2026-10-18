@@ -1,0 +1,8 @@
+God First Gift Shop Worldwide — targeted fixes
+
+1. Brevo transactional email sending is disabled in checkout verification, admin test-email, order-status email, and stock-alert email functions. Checkout does not report Brevo failures. Firebase Auth verification emails are unchanged.
+2. Checkout country selector is shown first, phone validation accepts international digits without requiring a preformatted plus-prefixed string, and postal/ZIP code is optional. Email validation wording no longer promises email updates.
+3. Homepage testimonial section is positioned directly after the trust strip and remains visible even when no genuine reviews have been added. Genuine testimonials are still managed in Admin → Settings; no fabricated reviews were added.
+4. AI assistant uses Chat Completions rather than the failing Responses API input format, supports general-purpose questions, retries a fallback model, and applies a request timeout.
+
+Important existing configuration issue not fixed by these changes: logs previously showed FIREBASE_SERVICE_ACCOUNT_JSON is missing. Without that server-side service account, a verified Paystack payment may not sync to the shared Firestore admin orders collection. Configure that before relying on production order syncing.

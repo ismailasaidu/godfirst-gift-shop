@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, sendEmailVerification, reload, applyActionCode } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, sendEmailVerification, reload } from 'firebase/auth';
 import { collection, doc, getDoc, getDocs, onSnapshot, query, setDoc, serverTimestamp, where } from 'firebase/firestore';
 import './styles.css';
 import { DEFAULT_CATEGORIES, DEFAULT_PRODUCTS, SUBCATEGORIES, money, slug, readStore } from './data/catalog.js';
@@ -28,7 +28,18 @@ import DeliveryPage from './pages/DeliveryPage.jsx';
 import OrderConfirmationPage from './pages/OrderConfirmationPage.jsx';
 import { PrivacyPage, TermsPage } from './pages/LegalPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
+
+// Use one known-authorized continuation domain in production. This avoids Firebase
+// rejecting verification/reset emails when the storefront is opened via www or a preview URL.
+const getAuthContinueUrl = (path) => {
+ const host = window.location.hostname;
+ const isLocal = host === 'localhost' || host === '127.0.0.1';
+ const base = isLocal ? window.location.origin : 'https://godfirstgiftshopworldwide.com';
+ return new URL(path, base).toString();
+};
 import { LoaderCircle, Gift } from 'lucide-react';
+import AuthActionPage from './pages/AuthActionPage.jsx';
+import GiftAssistant from './components/GiftAssistant.jsx';
 
 const ROUTES = { home:'/', admin:'/admin', shop:'/shop', services:'/services', giftFinder:'/gift-finder', wishlist:'/wishlist', cart:'/cart', checkout:'/checkout', tracking:'/track-order', about:'/about', faq:'/faq', contact:'/contact', account:'/account', delivery:'/delivery-information', confirmation:'/order-confirmation', privacy:'/privacy-policy', terms:'/terms' };
 const routeFromPath = path => { const clean = path.replace(/\/$/,'') || '/'; if (clean.startsWith('/product/')) return clean.split('/')[2] ? 'product' : 'notFound'; return Object.keys(ROUTES).find(key => ROUTES[key] === clean) || 'notFound'; };
@@ -53,8 +64,6 @@ export default function App() {
  const [category,setCategory]=useState('all'); const [subcategory,setSubcategory]=useState('all'); const [query,setQuery]=useState(''); const [sort,setSort]=useState('featured');
  const [mobileNav,setMobileNav]=useState(false); const [cartOpen,setCartOpen]=useState(false); const [adminOpen,setAdminOpen]=useState(false);
  const [toast,setToast]=useState(null);
- const [authActionStatus,setAuthActionStatus]=useState(()=>new URLSearchParams(window.location.search).get('result')==='success'?'success':new URLSearchParams(window.location.search).get('result')==='error'?'error':'working');
- const [authActionMessage,setAuthActionMessage]=useState(()=>new URLSearchParams(window.location.search).get('result')==='success'?'Your email address has been verified. Your God First Gift Shop account is ready. You can now return to the store and sign in.':new URLSearchParams(window.location.search).get('result')==='error'?'This verification link is no longer valid. Return to the store to request a fresh link.':'');
  const notify=useCallback((message,type='success')=>setToast({message,type}),[]); const [user,setUser]=useState(null); const [emailVerified,setEmailVerified]=useState(false); const [verificationBusy,setVerificationBusy]=useState(false); const [verificationNotice,setVerificationNotice]=useState('');
  const [authOpen,setAuthOpen]=useState(false); const [authMode,setAuthMode]=useState('login'); const [authIntent,setAuthIntent]=useState('customer');
  const [authForm,setAuthForm]=useState({email:'',password:'',confirmPassword:''}); const [authError,setAuthError]=useState(''); const [authSuccess,setAuthSuccess]=useState(''); const [authBusy,setAuthBusy]=useState(false);
@@ -103,6 +112,44 @@ export default function App() {
  useEffect(()=>{if(!firebaseConfigured||!db||!authReady||!isAdmin)return;let firstSnapshot=true;const unsubscribe=onSnapshot(collection(db,'orders'),snapshot=>{const next=snapshot.docs.map(item=>({id:item.id,...item.data()}));setOrders(current=>{const byId=new Map(current.map(order=>[String(order.id),order]));for(const order of next)byId.set(String(order.id),{...(byId.get(String(order.id))||{}),...order});return [...byId.values()].sort((a,b)=>(new Date(b.date||b.createdAt||0).getTime()||0)-(new Date(a.date||a.createdAt||0).getTime()||0));});if(firstSnapshot){firstSnapshot=false;return;}for(const change of snapshot.docChanges()){if(change.type!=='added')continue;const order={id:change.doc.id,...change.doc.data()};const title=`New order ${order.id}`;const body=`${order.customer?.name||'Customer'} · ${money(Number(order.total||0))}`;if(localStorage.getItem('gfg_browser_order_notifications')!=='false'){notify(`${title} — ${body}`,'info');if('Notification'in window&&Notification.permission==='granted'){try{new Notification(title,{body,tag:order.id});}catch{}}}}},error=>console.warn('Live admin order notifications unavailable:',error.message));return()=>unsubscribe();},[authReady,isAdmin,notify]);
  useEffect(()=>{ const id=window.setTimeout(()=>setSiteLoading(false),650); return ()=>window.clearTimeout(id); },[]);
  useEffect(()=>{ document.documentElement.scrollTop=0; document.body.scrollTop=0; },[]);
+ useEffect(()=>{
+  const pageSeo={
+   home:{title:'Online Gift Shop Nigeria & Worldwide | God First Gift Shop',description:'Shop birthday gifts, flowers, cakes, hampers and personalised gifts online in Nigeria and selected destinations worldwide at God First Gift Shop.'},
+   shop:{title:'Shop Gifts Online | Birthday Gifts, Flowers & Hampers',description:'Browse gifts online from God First Gift Shop Worldwide: birthday gifts, flowers, cakes, hampers, personalised gifts and thoughtful surprises for special occasions.'},
+   services:{title:'Gift Delivery & Gifting Services | God First Gift Shop',description:'Explore gift delivery assistance and gifting services from God First Gift Shop Worldwide. Contact us to confirm availability, destination and delivery details.'},
+   about:{title:'About God First Gift Shop Worldwide',description:'Meet God First Gift Shop Worldwide and discover our approach to thoughtful gifting, celebrations and helping people feel remembered.'},
+   contact:{title:'Contact God First Gift Shop | Gift & Order Support',description:'Contact God First Gift Shop Worldwide for gift recommendations, order enquiries, delivery questions and customer support.'},
+   faq:{title:'Gift Shop FAQs | Orders, Payments & Delivery',description:'Find answers about shopping, payments, order confirmations, delivery and tracking at God First Gift Shop Worldwide.'},
+   delivery:{title:'Gift Delivery Information | God First Gift Shop Worldwide',description:'Review delivery information and contact God First Gift Shop Worldwide to confirm delivery options, timing and charges for your destination.'},
+   privacy:{title:'Privacy Policy | God First Gift Shop Worldwide',description:'Read how God First Gift Shop Worldwide handles information when you browse, create an account or place an order.'},
+   terms:{title:'Terms & Conditions | God First Gift Shop Worldwide',description:'Read the terms and conditions for using God First Gift Shop Worldwide and placing orders.'},
+   giftFinder:{title:'Find the Perfect Gift | God First Gift Finder',description:'Find gift ideas by recipient, occasion and budget with the God First Gift Finder.'}
+  };
+  const pathProductId=decodeURIComponent(window.location.pathname.split('/')[2]||'');
+  const seoProduct=page==='product'?(selectedProduct||products.find(p=>String(p.id)===pathProductId)):null;
+  const meta=seoProduct?{title:`${seoProduct.name} | Buy Online | God First Gift Shop`,description:String(seoProduct.description||`Shop ${seoProduct.name} online at God First Gift Shop Worldwide.`).replace(/\s+/g,' ').slice(0,155)}:(pageSeo[page]||{title:'God First Gift Shop Worldwide | Thoughtful Gifts',description:'Shop birthday gifts, flowers, cakes, hampers and personalised gifts at God First Gift Shop Worldwide.'});
+  const origin='https://godfirstgiftshopworldwide.com';
+  const canonicalUrl=`${origin}${seoProduct?`/product/${encodeURIComponent(seoProduct.id)}`:(ROUTES[page]||'/')}`;
+  const setMeta=(selector,attribute,value,create)=>{let element=document.querySelector(selector);if(!element){element=document.createElement(create||'meta');if(create==='link')element.rel='canonical';else if(selector.includes('property='))element.setAttribute('property',selector.match(/property="([^"]+)/)?.[1]||'');else if(selector.includes('name='))element.name=selector.match(/name="([^"]+)/)?.[1]||'';document.head.appendChild(element);}element.setAttribute(attribute,value);};
+  document.title=meta.title;
+  setMeta('meta[name="description"]','content',meta.description);
+  setMeta('link[rel="canonical"]','href',canonicalUrl,'link');
+  setMeta('meta[property="og:title"]','content',meta.title);
+  setMeta('meta[property="og:description"]','content',meta.description);
+  setMeta('meta[property="og:url"]','content',canonicalUrl);
+  setMeta('meta[property="og:type"]','content',seoProduct?'product':'website');
+  setMeta('meta[property="og:image"]','content',seoProduct?.image||`${origin}/images/hero-cake.jpeg`);
+  setMeta('meta[name="twitter:card"]','content','summary_large_image');
+  setMeta('meta[name="twitter:title"]','content',meta.title);
+  setMeta('meta[name="twitter:description"]','content',meta.description);
+  const robotsMeta=document.querySelector('meta[name="robots"]')||document.head.appendChild(Object.assign(document.createElement('meta'),{name:'robots'}));
+  robotsMeta.content=['admin','account','cart','checkout','tracking','wishlist','confirmation'].includes(page)||page==='notFound'?'noindex,nofollow':'index,follow,max-image-preview:large';
+  const schema=seoProduct?{
+   '@context':'https://schema.org','@type':'Product','name':seoProduct.name,'description':String(seoProduct.description||'').slice(0,1000),'image':seoProduct.image?[seoProduct.image]:undefined,'sku':String(seoProduct.id),'brand':{'@type':'Brand','name':'God First Gift Shop Worldwide'},
+   'offers':{'@type':'Offer','url':canonicalUrl,'priceCurrency':'NGN','price':Number(seoProduct.price||0).toFixed(2),'availability':Number(seoProduct.stock)>0?'https://schema.org/InStock':'https://schema.org/OutOfStock','itemCondition':'https://schema.org/NewCondition'}
+  }:{'@context':'https://schema.org','@type':'OnlineStore','@id':`${origin}/#store`,'name':'God First Gift Shop Worldwide','url':origin,'description':'Online gift shop for birthday gifts, flowers, cakes, hampers and personalised gifts.','image':`${origin}/images/hero-cake.jpeg`,'email':'support@godfirstgiftshopworldwide.com','currenciesAccepted':'NGN','areaServed':'Worldwide','sameAs':[]};
+  let jsonLd=document.querySelector('script[data-gfg-seo-schema]');if(!jsonLd){jsonLd=document.createElement('script');jsonLd.type='application/ld+json';jsonLd.dataset.gfgSeoSchema='true';document.head.appendChild(jsonLd);}jsonLd.textContent=JSON.stringify(schema);
+ },[page,selectedProduct,products]);
  useEffect(()=>{ const frame=window.requestAnimationFrame(()=>{document.documentElement.scrollTop=0;document.body.scrollTop=0; const active=document.activeElement; if(active && active!==document.body && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)) active.blur();}); return ()=>window.cancelAnimationFrame(frame); },[page]);
  useEffect(()=>{localStorage.setItem('gfg_categories',JSON.stringify(categories));},[categories]);
  useEffect(()=>{localStorage.setItem('gfg_products',JSON.stringify(products));},[products]);
@@ -115,7 +162,6 @@ export default function App() {
  useEffect(()=>{localStorage.setItem('gfg_home_content',JSON.stringify(homeContent));},[homeContent]);
  useEffect(()=>{if(recentOrder)localStorage.setItem('gfg_recent_order',JSON.stringify(recentOrder));},[recentOrder]);
  useEffect(()=>{if(!toast)return;const id=window.setTimeout(()=>setToast(null),3500);return()=>window.clearTimeout(id);},[toast]);
- useEffect(()=>{const params=new URLSearchParams(window.location.search);const mode=params.get('mode');const code=params.get('oobCode');if(mode!=='verifyEmail'||!code)return;let alive=true;setAuthActionStatus('working');setAuthActionMessage('We are securely confirming your email address.');if(!auth){setAuthActionStatus('error');setAuthActionMessage('We could not connect to account services. Please return to the store and try again.');return;}applyActionCode(auth,code).then(()=>{if(!alive)return;setAuthActionStatus('success');setAuthActionMessage('Your email address has been verified. Your God First Gift Shop account is ready. You can now return to the store and sign in.');const clean=new URL(window.location.href);clean.searchParams.set('result','success');clean.searchParams.delete('oobCode');clean.searchParams.delete('apiKey');window.history.replaceState({},'',clean.pathname+clean.search+clean.hash);}).catch(error=>{if(!alive)return;setAuthActionStatus('error');const clean=new URL(window.location.href);clean.searchParams.set('result','error');clean.searchParams.delete('oobCode');clean.searchParams.delete('apiKey');window.history.replaceState({},'',clean.pathname+clean.search+clean.hash);setAuthActionMessage(error?.code==='auth/expired-action-code'?'This verification link has expired. Return to the store and request a new verification email.':error?.code==='auth/invalid-action-code'?'This verification link has already been used or is no longer valid. Try signing in, or request a new link from your account.':'We could not verify this link. It may have expired or already been used. Return to the store to request a fresh link.');});return()=>{alive=false;};},[]);
  useEffect(()=>{const params=new URLSearchParams(window.location.search);if(params.get('verification')==='complete'){if(auth?.currentUser){reload(auth.currentUser).then(()=>{setUser(auth.currentUser);setEmailVerified(Boolean(auth.currentUser?.emailVerified));}).catch(()=>{});}setVerificationNotice('Thanks for verifying your email. Your account status has been refreshed.');notify('Returned from email verification. Your account status has been refreshed.','success');params.delete('verification');const next=`${window.location.pathname}${params.toString()?`?${params.toString()}`:''}${window.location.hash}`;window.history.replaceState(window.history.state,'',next);}} ,[notify]);
  const go=useCallback(next=>{const path=next==='product'&&selectedProduct?`/product/${encodeURIComponent(selectedProduct.id)}`:(ROUTES[next]||'/');if(window.location.pathname!==path)window.history.pushState({page:next},'',path);setPage(next);setMobileNav(false);setCartOpen(false);setAdminOpen(false);document.documentElement.scrollTop=0;document.body.scrollTop=0;},[selectedProduct]);
  useEffect(()=>{if(page!=='checkout'||!authReady||user)return;try{sessionStorage.setItem('gfg_auth_return_to','/checkout');}catch{}setPendingReturnTo('/checkout');if(!authOpen)openAuth('customer');},[page,authReady,user,authOpen]);
@@ -140,7 +186,7 @@ export default function App() {
   setAuthBusy(true);
   try{
    if(authMode==='reset'){
-    await sendPasswordResetEmail(auth,authForm.email.trim());
+    await sendPasswordResetEmail(auth,authForm.email.trim(),{url:getAuthContinueUrl('/account?passwordReset=complete')});
     setAuthSuccess('If an account exists for this address, a password reset email has been sent. Check your inbox and spam folder.');
     setAuthMode('login');setAuthForm(old=>({...old,password:'',confirmPassword:''}));return;
    }
@@ -148,14 +194,14 @@ export default function App() {
     const credential=await createUserWithEmailAndPassword(auth,authForm.email.trim(),authForm.password);
     const createdUser=credential.user;
     try{
-     await sendEmailVerification(createdUser,{url:`https://godfirst-gift-shop-world-wide.netlify.app/account?verification=complete`});
+     await sendEmailVerification(createdUser,{url:getAuthContinueUrl('/account?verification=complete')});
     }catch(sendError){
      console.error('Firebase verification email send failed:',sendError);
      await signOut(auth).catch(()=>{});setUser(null);setEmailVerified(false);setIsAdmin(false);
      const sendMessages={
       'auth/too-many-requests':'Firebase temporarily limited verification emails. Wait a few minutes, then try signing in to request another email.',
       'auth/operation-not-allowed':'Email/password authentication or verification email sending is not enabled correctly in Firebase Authentication.',
-      'auth/unauthorized-continue-uri':'Firebase has not authorised this website URL. Add godfirst-gift-shop-world-wide.netlify.app in Firebase Authentication → Settings → Authorised domains.',
+      'auth/unauthorized-continue-uri':'Firebase rejected the verification continuation URL. This build uses https://godfirstgiftshopworldwide.com for production links. In Firebase Console → Authentication → Settings → Authorized domains, confirm godfirstgiftshopworldwide.com is listed exactly (without a backslash), then retry.',
       'auth/network-request-failed':'A network problem stopped the verification email from being sent. Check your connection and try again.'
      };
      setAuthError(`Your account was created, but Firebase could not send the verification email. ${sendMessages[sendError?.code]||`Please try signing in again to request a new verification email. (${sendError?.code||'email-send-error'})`}`);
@@ -170,7 +216,7 @@ export default function App() {
    const current=credential.user;
    if(!current.emailVerified){
     let sent=false;
-    try{await sendEmailVerification(current,{url:`https://godfirst-gift-shop-world-wide.netlify.app/account?verification=complete`});sent=true;}catch(sendError){console.error('Could not resend verification email during sign-in:',sendError);}
+    try{await sendEmailVerification(current,{url:getAuthContinueUrl('/account?verification=complete')});sent=true;}catch(sendError){console.error('Could not resend verification email during sign-in:',sendError);}
     await signOut(auth).catch(()=>{});setUser(null);setEmailVerified(false);setIsAdmin(false);
     setAuthError(sent?'Your email address is not verified yet, so you are not signed in. We sent you a fresh verification link. Check your inbox and Spam/Junk folder.':'Your email address is not verified yet, so you are not signed in. We could not send another verification email. Wait a few minutes and try again, and check Spam/Junk.');
     return;
@@ -202,14 +248,30 @@ export default function App() {
  };
  const openAdmin=()=>{if(user&&isAdmin){setAdminOpen(true);go('admin');return;}openAuth('admin');};
  const signOutCurrentUser=async()=>{if(auth)await signOut(auth);setUser(null);setEmailVerified(false);setIsAdmin(false);setAdminOpen(false);notify('You have signed out');};
- const resendVerification=async()=>{if(!auth?.currentUser){setVerificationNotice('Please sign in again to resend the verification email.');return;}setVerificationBusy(true);setVerificationNotice('');try{await sendEmailVerification(auth.currentUser,{url:`https://godfirst-gift-shop-world-wide.netlify.app/account?verification=complete`});setVerificationNotice(`A new verification link was sent to ${auth.currentUser.email}.`);notify('Verification email sent','success');}catch(error){const message=error.code==='auth/too-many-requests'?'Too many requests. Please wait before trying again.':error.message||'Could not send verification email.';setVerificationNotice(message);notify(message,'error');}finally{setVerificationBusy(false);}};
- const completePayment=async({reference,channel='Paystack',verificationStatus='pending_server_verification',verifiedAmount,chargedAmount,currency,paidAt,orderId,orderSaved,orderSaveMessage}={})=>{if(!cart.length){notify('Your bag is empty','warning');return;}const unavailable=cart.find(item=>{const current=products.find(p=>p.id===item.id);return !current||Number(current.stock)<Number(item.qty)||Number(current.stock)<=0;});if(unavailable){notify(`${unavailable.name} no longer has enough stock. Please update your bag.`,'error');go('cart');return;}const verified=verificationStatus==='verified';const order={id:String(orderId||reference||`GFG-${Date.now().toString().slice(-6)}`),date:new Date().toISOString(),customer:checkout,items:cart,subtotal:total,deliveryMethod,deliveryFee,total:grandTotal,payment:{provider:channel,reference:reference||'',verificationStatus,...(verified?{verifiedAmount,chargedAmount,currency,paidAt}: {})},status:verified?'Paid — awaiting fulfilment':'Payment confirmation pending',...(user?.uid?{ownerUid:user.uid}:{})};if(user?.uid&&db&&!orderSaved){try{await saveCustomerOrder(order,user.uid);}catch(error){notify(`Order could not sync to your account yet: ${error.message}`,'error');}}setOrders(old=>[order,...old.filter(existing=>String(existing.id)!==String(order.id))]);if(verified&&!orderSaved){notify(orderSaveMessage||'Payment was verified, but this order has not synced to the shared admin database yet. Check server Firebase credentials before fulfilment. Reference: '+String(reference||''),'warning');}setCart([]);setCheckout({name:'',email:'',phone:'',address:'',addressLine2:'',city:'',state:'',postalCode:'',country:'',note:'',deliveryMethod:'normal'});setTrackRef(order.id);setTrackingResult(order);setRecentOrder(order);notify(verified?'Payment verified. Your order has been received.':'Payment reference received. Confirmation is pending verification.',verified?'success':'info');go('confirmation');};
+ const resendVerification=async()=>{if(!auth?.currentUser){setVerificationNotice('Please sign in again to resend the verification email.');return;}setVerificationBusy(true);setVerificationNotice('');try{await sendEmailVerification(auth.currentUser,{url:getAuthContinueUrl('/account?verification=complete')});setVerificationNotice(`A new verification link was sent to ${auth.currentUser.email}.`);notify('Verification email sent','success');}catch(error){const message=error.code==='auth/too-many-requests'?'Too many requests. Please wait before trying again.':error.message||'Could not send verification email.';setVerificationNotice(message);notify(message,'error');}finally{setVerificationBusy(false);}};
+ const completePayment=async({reference,channel='Paystack',verificationStatus='pending_server_verification',verifiedAmount,chargedAmount,currency,paidAt,orderId,orderSaved,orderSaveMessage,emailNotifications}={})=>{
+  if(!cart.length){notify('Your bag is empty','warning');return;}
+  const unavailable=cart.find(item=>{const current=products.find(p=>p.id===item.id);return !current||Number(current.stock)<Number(item.qty)||Number(current.stock)<=0;});
+  if(unavailable){notify(`${unavailable.name} no longer has enough stock. Please update your bag.`,'error');go('cart');return;}
+  const verified=verificationStatus==='verified';
+  const order={id:String(orderId||reference||`GFG-${Date.now().toString().slice(-6)}`),date:new Date().toISOString(),customer:checkout,items:cart,subtotal:total,deliveryMethod,deliveryFee,total:grandTotal,payment:{provider:channel,reference:reference||'',verificationStatus,...(verified?{verifiedAmount,chargedAmount,currency,paidAt}: {})},status:verified?'Paid — awaiting fulfilment':'Payment confirmation pending',...(user?.uid?{ownerUid:user.uid}:{})};
+  let finalWarning='';
+  if(user?.uid&&db&&!orderSaved){try{await saveCustomerOrder(order,user.uid);}catch(error){finalWarning=`Order could not sync to your account yet: ${error.message||'Firebase save failed.'}`;}}
+  setOrders(old=>[order,...old.filter(existing=>String(existing.id)!==String(order.id))]);
+  if(verified&&!orderSaved){finalWarning=[finalWarning,orderSaveMessage||'Payment was verified, but the order has not synced to the shared admin database. Check server Firebase credentials before fulfilment.'].filter(Boolean).join(' ');}
+  // Transactional email notifications are disabled; they do not block checkout.
+  setCart([]);setCheckout({name:'',email:'',phone:'',address:'',addressLine2:'',city:'',state:'',postalCode:'',country:'',note:'',deliveryMethod:'normal'});setTrackRef(order.id);setTrackingResult(order);setRecentOrder(order);
+  if(finalWarning)notify(`${verified?'Payment verified.':'Order recorded.'} ${finalWarning} Reference: ${String(reference||'')}`,'warning');
+  else notify(verified?'Payment verified and order received.':'Payment reference received. Confirmation is pending verification.',verified?'success':'info');
+  go('confirmation');
+ };
  const trackOrder=e=>{e.preventDefault();const result=orders.find(o=>o.id.toLowerCase()===trackRef.trim().toLowerCase());setTrackingResult(result||null);if(!result)notify('We could not find that order reference','error');};
  const openCategory=id=>{setCategory(id);setSubcategory('all');setQuery('');go('shop');};
  const wishedProducts=products.filter(p=>wishlist.includes(p.id));
  const renderAdminWorkspace=()=> <AdminPage products={products} categories={categories} orders={orders} setProducts={updateProducts} setCategories={updateCategories} setOrders={updateOrders} notify={notify} onClose={()=>{setAdminOpen(false);if(page==='admin')go('home');}} categoryName={categoryName} homeContent={homeContent} setHomeContent={setHomeContent} onImportLocalStore={async()=>{try{await importLocalStore({products,categories,orders});notify('Catalogue and categories copied to the shared database');}catch(error){notify(error.message||'Could not publish catalogue to Firestore','error');}}}/>;
  if(page==='admin'&&isAdmin) return <div className="admin-route-shell">{renderAdminWorkspace()}</div>;
- if(['verifyEmail','verificationResult'].includes(new URLSearchParams(window.location.search).get('mode'))) return <div className="app-shell auth-action-shell"><main className="auth-action-page"><section className="auth-action-card"><div className="auth-action-brand"><span className="brand-mark"><Gift size={23}/></span><div><b>GOD FIRST</b><i>Gift Shop Worldwide</i></div></div><div className={`auth-action-icon ${authActionStatus==='success'?'is-success':authActionStatus==='error'?'is-error':''}`}>{authActionStatus==='working'?<LoaderCircle className="admin-upload-spin" size={30}/>:authActionStatus==='success'?<Gift size={30}/>:<LoaderCircle size={30}/>}</div><p className="eyebrow">YOUR ACCOUNT, MADE PERSONAL</p><h1>{authActionStatus==='working'?'Confirming your email':authActionStatus==='success'?'You’re all set.':'Let’s get your account verified.'}</h1><p className="auth-action-message">{authActionMessage||'Preparing your secure verification link…'}</p>{authActionStatus==='success'?<button className="btn btn-primary" onClick={()=>{window.location.href=`https://godfirst-gift-shop-world-wide.netlify.app/account?verification=complete`;}}>Continue to your account <span aria-hidden="true">→</span></button>:authActionStatus==='error'?<><a className="btn btn-primary" href="/account">Return to God First <span aria-hidden="true">→</span></a><p className="auth-action-footnote">If the link has expired, sign in and use the resend verification option.</p></>:<p className="auth-action-footnote">Please keep this page open for a moment.</p>}</section></main></div>;
+ const actionMode = new URLSearchParams(window.location.search).get('mode');
+ if(['verifyEmail','verificationResult','resetPassword','recoverEmail','verifyAndChangeEmail','action'].includes(actionMode) || window.location.pathname.replace(/\/$/,'')==='/auth/action') return <AuthActionPage/>;
  return <div className="app-shell"><Header page={page} go={go} categories={categories} onOpenCategory={(id,sub='all')=>{setCategory(id);setSubcategory(sub);setQuery('');go('shop');}} cartCount={cartCount} wishlistCount={wishlist.length} query={query} setQuery={setQuery} openCart={()=>setCartOpen(true)} openAuth={openAuth} openAdmin={openAdmin} onSignOut={signOutCurrentUser} isAdmin={isAdmin} mobileNav={mobileNav} setMobileNav={setMobileNav} user={user}/>
  <main key={page + (page==='product' ? (selectedProduct?.id||'') : '')} className="page-transition">
  {page==='admin'&&(!authReady||roleLoading)&&<section className="auth-route-message"><LoaderCircle className="admin-upload-spin" size={24}/><h1>Checking administrator access</h1><p>Please wait while we verify your account.</p></section>}{page==='admin'&&authReady&&!roleLoading&&!isAdmin&&<section className="auth-route-message"><h1>Administrator access required</h1><p>Sign in with an authorised store administrator account to open this page.</p><button className="btn btn-primary" onClick={()=>openAuth('admin')}>Administrator sign in</button><button className="btn btn-secondary" onClick={()=>go('home')}>Back to store</button></section>}
@@ -236,5 +298,6 @@ export default function App() {
  {cartOpen&&<CartDrawer cart={cart} onClose={()=>setCartOpen(false)} qty={qty} go={go} total={total} openProduct={openProduct}/>}
  {adminOpen&&page!=='admin'&&isAdmin&&renderAdminWorkspace()}
  {authOpen&&<LoginPage onClose={()=>setAuthOpen(false)} onClearSuccess={()=>setAuthSuccess('')} success={authSuccess} mode={authMode} setMode={setAuthMode} intent={authIntent} form={authForm} setForm={setAuthForm} error={authError} busy={authBusy} onSubmit={submitAuth}/>}
+ <GiftAssistant products={displayProducts} categories={categories} onOpenProduct={openProduct}/>
  <Toast toast={toast} dismiss={()=>setToast(null)}/>{siteLoading&&<div className="site-loader" role="status" aria-live="polite"><span className="loader-brand"><span className="brand-mark"><Gift size={25}/></span><b>GOD FIRST <i>Gift Shop Worldwide</i></b></span><LoaderCircle className="loader-spinner" size={27}/><span className="loader-caption">Preparing something thoughtful…</span></div>}</div>;
 }

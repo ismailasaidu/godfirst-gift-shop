@@ -13,6 +13,13 @@
 [functions]
   directory = "netlify/functions"
 
+# Generate the sitemap from the live published Firestore catalogue when server credentials are configured.
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/.netlify/functions/sitemap"
+  status = 200
+  force = true
+
 # Keep this SPA fallback after function routing.
 [[redirects]]
   from = "/*"

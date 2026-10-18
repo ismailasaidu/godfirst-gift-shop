@@ -13,6 +13,8 @@ export default async (request) => {
   };
   const json = (statusCode, body) => new Response(JSON.stringify(body), { status: statusCode, headers });
 
+  const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+
   if (request.method !== 'POST') {
     return json(405, { verified: false, message: 'Method not allowed.' });
   }
@@ -101,59 +103,56 @@ export default async (request) => {
     let orderSaved = false;
     let orderId = reference;
     let orderSaveMessage = '';
+    let emailNotifications = { disabled: true, reason: 'temporarily_disabled' };
     if (orderInput) {
       const orderTotalMinor = Math.round(Number(orderInput.total) * 100);
       const orderItems = Array.isArray(orderInput.items) ? orderInput.items : [];
       const customer = orderInput.customer && typeof orderInput.customer === 'object' ? orderInput.customer : {};
-      if (!Number.isSafeInteger(orderTotalMinor) || orderTotalMinor !== expectedAmount || !orderItems.length || !String(customer.email || '').trim()) {
-        orderSaveMessage = 'Paystack verified the payment, but the submitted order details did not pass validation. Do not pay again; reconcile this reference before fulfilment.';
-      }
-      if (!orderSaveMessage) try {
-        const rawServiceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-        if (!rawServiceAccount) throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON is not configured.');
-        const serviceAccount = JSON.parse(rawServiceAccount);
-        if (serviceAccount.private_key) serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
-        const app = getApps().length ? getApps()[0] : initializeApp({ credential: cert(serviceAccount), projectId: serviceAccount.project_id || process.env.FIREBASE_PROJECT_ID });
-        const db = getFirestore(app);
+      const customerEmail = String(customer.email || '').trim();
+      if (!Number.isSafeInteger(orderTotalMinor) || orderTotalMinor !== expectedAmount || !orderItems.length || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
+        orderSaveMessage = 'Paystack verified the payment, but the submitted order details did not pass validation. Do not pay again; contact the store with this reference.';
+      } else {
         orderId = String(orderInput.id || reference).replace(/[^a-zA-Z0-9._-]/g, '-').slice(0, 100) || reference;
         const savedOrder = {
           id: orderId,
           date: String(orderInput.date || new Date().toISOString()),
           customer: {
-            name: String(customer.name || '').slice(0, 160),
-            email: String(customer.email || '').trim().slice(0, 254),
-            phone: String(customer.phone || '').slice(0, 32),
-            address: String(customer.address || '').slice(0, 300),
-            addressLine2: String(customer.addressLine2 || '').slice(0, 300),
-            city: String(customer.city || '').slice(0, 120),
-            state: String(customer.state || '').slice(0, 120),
-            postalCode: String(customer.postalCode || '').slice(0, 40),
-            country: String(customer.country || '').slice(0, 100),
-            note: String(customer.note || '').slice(0, 1000),
+            name: String(customer.name || '').slice(0, 160), email: customerEmail.slice(0, 254),
+            phone: String(customer.phone || '').slice(0, 32), address: String(customer.address || '').slice(0, 300),
+            addressLine2: String(customer.addressLine2 || '').slice(0, 300), city: String(customer.city || '').slice(0, 120),
+            state: String(customer.state || '').slice(0, 120), postalCode: String(customer.postalCode || '').slice(0, 40),
+            country: String(customer.country || '').slice(0, 100), note: String(customer.note || '').slice(0, 1000),
           },
           items: orderItems.slice(0, 100).map(item => ({
-            id: String(item.id || item.productId || '').slice(0, 120),
-            productId: String(item.productId || item.id || '').slice(0, 120),
-            name: String(item.name || 'Gift').slice(0, 200),
-            image: String(item.image || '').slice(0, 1500),
-            price: Number(item.price || item.unitPrice || 0),
-            qty: Math.max(1, Math.min(100, Math.floor(Number(item.qty ?? item.quantity ?? 1)))),
+            id: String(item.id || item.productId || '').slice(0, 120), productId: String(item.productId || item.id || '').slice(0, 120),
+            name: String(item.name || 'Gift').slice(0, 200), image: String(item.image || '').slice(0, 1500),
+            price: Number(item.price || item.unitPrice || 0), qty: Math.max(1, Math.min(100, Math.floor(Number(item.qty ?? item.quantity ?? 1)))),
           })),
-          subtotal: Number(orderInput.subtotal || 0),
-          deliveryMethod: String(orderInput.deliveryMethod || 'normal').slice(0, 40),
-          deliveryFee: Number(orderInput.deliveryFee || 0),
-          total: Number(orderInput.total),
+          subtotal: Number(orderInput.subtotal || 0), deliveryMethod: String(orderInput.deliveryMethod || 'normal').slice(0, 40),
+          deliveryFee: Number(orderInput.deliveryFee || 0), total: Number(orderInput.total),
           payment: { provider: 'Paystack', reference: transaction.reference, verificationStatus: 'verified', verifiedAmount: hasRequestedAmount ? requestedAmount : reportedAmount, chargedAmount: reportedAmount, currency: reportedCurrency, paidAt: transaction.paid_at || null, channel: transaction.channel || 'Paystack' },
-          status: 'Paid — awaiting fulfilment',
-          orderSource: 'paystack-verified-checkout',
-          updatedAt: new Date().toISOString(),
-          createdAt: new Date().toISOString(),
+          status: 'Paid — awaiting fulfilment', orderSource: 'paystack-verified-checkout',
+          updatedAt: new Date().toISOString(), createdAt: new Date().toISOString(),
         };
-        await db.collection('orders').doc(orderId).set(savedOrder, { merge: true });
-        orderSaved = true;
-      } catch (saveError) {
-        console.error('Verified payment order save failed:', saveError?.message || saveError);
-        orderSaveMessage = 'Payment verified, but the order could not sync to the shared admin database. Configure FIREBASE_SERVICE_ACCOUNT_JSON and reconcile this reference before fulfilment.';
+        // Order persistence is attempted independently of disabled email notifications.
+        let adminDb = null;
+        try {
+          const rawServiceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+          if (!rawServiceAccount) throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON is not configured.');
+          const serviceAccount = JSON.parse(rawServiceAccount);
+          if (serviceAccount.private_key) serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+          const app = getApps().length ? getApps()[0] : initializeApp({ credential: cert(serviceAccount), projectId: serviceAccount.project_id || process.env.FIREBASE_PROJECT_ID });
+          adminDb = getFirestore(app);
+          await adminDb.collection('orders').doc(orderId).set(savedOrder, { merge: true });
+          orderSaved = true;
+        } catch (saveError) {
+          console.error('Verified payment order save failed:', saveError?.message || saveError);
+          orderSaveMessage = 'Payment was verified, but the order could not sync to the shared admin database. Do not pay again; reconcile the payment reference before fulfilment.';
+        }
+
+        // Transactional email notifications are intentionally disabled for now.
+        // Payment verification and order persistence remain independent of email.
+        emailNotifications = { disabled: true, reason: 'temporarily_disabled' };
       }
     }
     return json(200, {
@@ -161,6 +160,7 @@ export default async (request) => {
       orderSaved,
       orderId,
       orderSaveMessage,
+      emailNotifications,
       reference: transaction.reference,
       amount: hasRequestedAmount ? requestedAmount : Number(transaction.amount),
       chargedAmount: Number(transaction.amount),
