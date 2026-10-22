@@ -1694,3 +1694,25 @@ input,select,textarea{min-width:0}
   .home-testimonial-card { padding: 16px; }
   .home-testimonial-text { font-size: 17px; }
 }
+
+
+/* Final desktop admin layout: compact fixed navigation column, flexible workspace. */
+@media (min-width: 761px) {
+  .admin-overlay .admin-app, .admin-route-shell .admin-app, .admin-app {
+    display: grid !important;
+    grid-template-columns: 220px minmax(0, 1fr) !important;
+    width: 100% !important; max-width: 100% !important;
+    min-width: 0 !important;
+  }
+  .admin-overlay .admin-sidebar, .admin-route-shell .admin-sidebar, .admin-app > .admin-sidebar {
+    width: 220px !important; min-width: 0 !important; max-width: 220px !important;
+    flex: none !important; box-sizing: border-box !important;
+  }
+  .admin-overlay .admin-content, .admin-route-shell .admin-content, .admin-app > .admin-content {
+    width: 100% !important; min-width: 0 !important; max-width: none !important;
+  }
+}
+@media (min-width: 1200px) {
+  .admin-overlay .admin-app, .admin-route-shell .admin-app, .admin-app { grid-template-columns: 235px minmax(0, 1fr) !important; }
+  .admin-overlay .admin-sidebar, .admin-route-shell .admin-sidebar, .admin-app > .admin-sidebar { width:235px !important; max-width:235px !important; }
+}
