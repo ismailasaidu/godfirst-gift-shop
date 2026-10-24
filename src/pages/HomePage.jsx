@@ -424,7 +424,16 @@ export default function HomePage({
                 onClick={() => openCategory(item.id)}
               >
                 <span className="gift-type-image">
-                  <img src={item.image} alt={item.title} loading="lazy" />
+                  src=
+                  {categories.find((c) => String(c.id) === String(item.id))
+                    ?.image ||
+                    categories.find((c) => String(c.id) === String(item.id))
+                      ?.imageUrl ||
+                    categories.find((c) => String(c.id) === String(item.id))
+                      ?.photoURL ||
+                    item.image}
+                  alt={item.title}
+                  loading="lazy"
                   <span className="gift-type-number">0{i + 1}</span>
                 </span>
                 <span className="gift-type-copy">
