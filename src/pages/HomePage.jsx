@@ -435,16 +435,7 @@ export default function HomePage({
               <h2>A Little Something They’ll Love</h2>
               <p>Fresh inspiration from our gift collection, picked for your next thoughtful surprise.</p>
             </div>
-            <div className="inspiration-controls">
-              <span className="inspiration-live"><span /> Discover something lovely</span>
-              <div className="inspiration-actions">
-                <button type="button" className="inspiration-arrow" aria-label="Previous products" onClick={() => scrollInspiration(-1)}><ChevronLeft size={17} /></button>
-                <button type="button" className="inspiration-arrow" aria-label="Next products" onClick={() => scrollInspiration(1)}><ChevronRight size={17} /></button>
-                <button type="button" aria-label="Shuffle gift ideas" onClick={() => { setInspirationProducts(pickInspirationProducts(products)); if (inspirationTrack.current) inspirationTrack.current.scrollTo({ left: 0, behavior: "smooth" }); }}>
-                  <Sparkles size={15} /> Surprise me
-                </button>
-              </div>
-            </div>
+
           </div>
           {inspirationProducts.length > 0 ? (
             <div className="inspiration-carousel-viewport">
@@ -468,7 +459,10 @@ export default function HomePage({
             </div>
           )}
           <div className="inspiration-footer">
-            <span>New picks every few seconds</span>
+            <div className="inspiration-actions" aria-label="Carousel navigation">
+              <button type="button" className="inspiration-arrow" aria-label="Previous products" onClick={() => scrollInspiration(-1)}><ChevronLeft size={17} /></button>
+              <button type="button" className="inspiration-arrow" aria-label="Next products" onClick={() => scrollInspiration(1)}><ChevronRight size={17} /></button>
+            </div>
             <button className="text-link" onClick={() => go("shop")}>Explore all gifts <ArrowRight size={15} /></button>
           </div>
         </div>
