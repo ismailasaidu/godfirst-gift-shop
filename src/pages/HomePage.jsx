@@ -18,36 +18,7 @@ import {
 import { CATEGORY_IMAGES, SUBCATEGORIES } from "../data/catalog.js";
 import ProductCard from "../components/ProductCard.jsx";
 
-const GIFT_TYPES = [
-  {
-    id: "flowers",
-    title: "Flowers",
-    text: "A little colour goes a long way",
-    image:
-      "https://images.unsplash.com/photo-1494972308805-463bc619d34e?auto=format&fit=crop&w=800&q=85",
-  },
-  {
-    id: "birthday",
-    title: "Birthday gifts",
-    text: "Make their day feel bigger",
-    image:
-      "https://images.unsplash.com/photo-1530103862676-de8c9debad1?auto=format&fit=crop&w=800&q=85",
-  },
-  {
-    id: "personalised",
-    title: "Personalised",
-    text: "Made to feel like theirs",
-    image:
-      "https://images.unsplash.com/photo-1559454403-b8fb88521f11?auto=format&fit=crop&w=800&q=85",
-  },
-  {
-    id: "romance",
-    title: "Love & anniversaries",
-    text: "For the moments you share",
-    image:
-      "https://images.unsplash.com/photo-1518895949257-7621c3c786d7?auto=format&fit=crop&w=800&q=85",
-  },
-];
+
 
 export default function HomePage({
   categories,
@@ -61,6 +32,24 @@ export default function HomePage({
   const featured = products.filter((p) => p.featured).slice(0, 4);
   const testimonialTrack = useRef(null);
   const [testimonialPaused, setTestimonialPaused] = useState(false);
+  const [inspirationPaused, setInspirationPaused] = useState(false);
+  const [inspirationProducts, setInspirationProducts] = useState([]);
+  const inspirationTrack = useRef(null);
+  const pickInspirationProducts = (source) => {
+    const pool = (Array.isArray(source) ? source : []).filter((product) => {
+      if (!product || product.id == null || !product.name) return false;
+      if (product.available === false || product.isAvailable === false || product.soldOut === true) return false;
+      if (product.status && /sold|unavailable|inactive|draft/i.test(String(product.status))) return false;
+      if (product.stock !== undefined && product.stock !== null && Number(product.stock) <= 0) return false;
+      return true;
+    });
+    const shuffled = [...pool];
+    for (let i = shuffled.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled.slice(0, 12);
+  };
   const scrollTestimonials = (direction) => {
     const track = testimonialTrack.current;
     if (!track) return;
@@ -122,6 +111,29 @@ export default function HomePage({
     }, 5200);
     return () => window.clearInterval(timer);
   }, [testimonialPaused, displayTestimonials.length]);
+  useEffect(() => {
+    setInspirationProducts(pickInspirationProducts(products));
+  }, [products]);
+
+  const scrollInspiration = (direction) => {
+    const track = inspirationTrack.current;
+    if (!track) return;
+    const card = track.querySelector(".inspiration-slide");
+    const gap = 16;
+    const distance = card ? card.getBoundingClientRect().width + gap : track.clientWidth * 0.8;
+    const atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 8;
+    const atStart = track.scrollLeft <= 8;
+    if (direction > 0 && atEnd) track.scrollTo({ left: 0, behavior: "smooth" });
+    else if (direction < 0 && atStart) track.scrollTo({ left: track.scrollWidth, behavior: "smooth" });
+    else track.scrollBy({ left: direction * distance, behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    if (inspirationPaused || inspirationProducts.length < 2) return;
+    const timer = window.setInterval(() => scrollInspiration(1), 3600);
+    return () => window.clearInterval(timer);
+  }, [inspirationPaused, inspirationProducts.length]);
+
   return (
     <main className="home-page">
       <section className="hero container">
@@ -407,42 +419,57 @@ export default function HomePage({
         </div>
       </section>
 
-      <section className="section gift-type-section">
+      <section
+        className="section gift-type-section inspiration-section"
+        onMouseEnter={() => setInspirationPaused(true)}
+        onMouseLeave={() => setInspirationPaused(false)}
+        onFocusCapture={() => setInspirationPaused(true)}
+        onBlurCapture={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) setInspirationPaused(false);
+        }}
+      >
         <div className="container">
-          <div className="section-heading">
+          <div className="section-heading inspiration-heading">
             <div>
-              <p className="eyebrow">A GIFT FOR EVERY KIND OF MOMENT</p>
-              <h2>What would make them smile?</h2>
-              <p>Start with something they love. We will help with the rest.</p>
+              <p className="eyebrow">A LITTLE SOMETHING SPECIAL</p>
+              <h2>A Little Something They’ll Love</h2>
+              <p>Fresh inspiration from our gift collection, picked for your next thoughtful surprise.</p>
+            </div>
+            <div className="inspiration-controls">
+              <span className="inspiration-live"><span /> Discover something lovely</span>
+              <div className="inspiration-actions">
+                <button type="button" className="inspiration-arrow" aria-label="Previous products" onClick={() => scrollInspiration(-1)}><ChevronLeft size={17} /></button>
+                <button type="button" className="inspiration-arrow" aria-label="Next products" onClick={() => scrollInspiration(1)}><ChevronRight size={17} /></button>
+                <button type="button" aria-label="Shuffle gift ideas" onClick={() => { setInspirationProducts(pickInspirationProducts(products)); if (inspirationTrack.current) inspirationTrack.current.scrollTo({ left: 0, behavior: "smooth" }); }}>
+                  <Sparkles size={15} /> Surprise me
+                </button>
+              </div>
             </div>
           </div>
-          <div className="gift-type-grid">
-            {GIFT_TYPES.map((item, i) => (
-              <button
-                className="gift-type-card"
-                key={item.id}
-                onClick={() => openCategory(item.id)}
-              >
-                <span className="gift-type-image">
-                  src=
-                  {categories.find((c) => String(c.id) === String(item.id))
-                    ?.image ||
-                    categories.find((c) => String(c.id) === String(item.id))
-                      ?.imageUrl ||
-                    categories.find((c) => String(c.id) === String(item.id))
-                      ?.photoURL ||
-                    item.image}
-                  alt={item.title}
-                  loading="lazy"
-                  <span className="gift-type-number">0{i + 1}</span>
-                </span>
-                <span className="gift-type-copy">
-                  <b>{item.title}</b>
-                  <small>{item.text}</small>
-                  <ArrowRight size={17} />
-                </span>
-              </button>
-            ))}
+          {inspirationProducts.length > 0 ? (
+            <div className="inspiration-carousel-viewport">
+              <div className="inspiration-product-track" ref={inspirationTrack}>
+                {inspirationProducts.map((product) => (
+                  <div className="inspiration-slide" key={product.id}>
+                    <ProductCard
+                      product={product}
+                      categoryName={categoryName}
+                      {...productCardProps}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="inspiration-empty">
+              <Gift size={25} />
+              <p>New gift ideas are being prepared.</p>
+              <button className="text-link" onClick={() => go("shop")}>Explore all gifts <ArrowRight size={15} /></button>
+            </div>
+          )}
+          <div className="inspiration-footer">
+            <span>New picks every few seconds</span>
+            <button className="text-link" onClick={() => go("shop")}>Explore all gifts <ArrowRight size={15} /></button>
           </div>
         </div>
       </section>
