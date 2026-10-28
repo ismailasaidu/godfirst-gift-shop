@@ -31,7 +31,7 @@ export default function Header({ page, go, cartCount, wishlistCount, query, setQ
     if (onOpenCategory) onOpenCategory(id, sub);
     else go('shop');
   };
-  const links = [['home', 'Home'], ['services', 'Services'], ['giftFinder', 'Gift Finder'], ['tracking', 'Track order']];
+  const links = [['home', 'Home'], ['services', 'Services'], ['customGift', 'Custom gifts'], ['giftFinder', 'Gift Finder'], ['tracking', 'Track order']];
   const extraLinks = [['about', 'About us'], ['faq', 'FAQs'], ['contact', 'Contact us'], ['delivery', 'Delivery information'], ['account', 'My account'], ['privacy', 'Privacy policy'], ['terms', 'Terms & conditions']];
 
   return <>

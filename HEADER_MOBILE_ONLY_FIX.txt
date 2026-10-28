@@ -1,0 +1,14 @@
+HEADER FIX V6
+
+Requested change:
+- Keep the horizontal navigation/header layout on desktop.
+- Use the hamburger button and left-opening navigation drawer only on mobile widths (760px and below).
+- Remove the previous desktop-wide drawer breakpoint that was showing the hamburger on laptop/desktop screens.
+- Keep the mobile search and compact bag behaviour limited to mobile widths.
+
+Test from this folder:
+  npm install
+  npm run build
+  npx netlify dev
+
+Open the local Netlify URL and verify at desktop width (>760 CSS px) and mobile width (<=760 CSS px).

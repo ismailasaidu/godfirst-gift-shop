@@ -15,6 +15,7 @@ import ProductPage from './pages/ProductPage.jsx';
 import ServicesPage from './pages/ServicesPage.jsx';
 import { WishlistPage } from './pages/SavedPages.jsx';
 import GiftFinderPage from './pages/GiftFinderPage.jsx';
+import CustomGiftPage from './pages/CustomGiftPage.jsx';
 import CheckoutPage, { CartDrawer } from './pages/CheckoutPage.jsx';
 import CartPage from './pages/CartPage.jsx';
 import TrackingPage from './pages/TrackingPage.jsx';
@@ -41,7 +42,7 @@ import { LoaderCircle, Gift } from 'lucide-react';
 import AuthActionPage from './pages/AuthActionPage.jsx';
 import GiftAssistant from './components/GiftAssistant.jsx';
 
-const ROUTES = { home:'/', admin:'/admin', shop:'/shop', services:'/services', giftFinder:'/gift-finder', wishlist:'/wishlist', cart:'/cart', checkout:'/checkout', tracking:'/track-order', about:'/about', faq:'/faq', contact:'/contact', account:'/account', delivery:'/delivery-information', confirmation:'/order-confirmation', privacy:'/privacy-policy', terms:'/terms' };
+const ROUTES = { home:'/', admin:'/admin', shop:'/shop', services:'/services', customGift:'/custom-gifts', giftFinder:'/gift-finder', wishlist:'/wishlist', cart:'/cart', checkout:'/checkout', tracking:'/track-order', about:'/about', faq:'/faq', contact:'/contact', account:'/account', delivery:'/delivery-information', confirmation:'/order-confirmation', privacy:'/privacy-policy', terms:'/terms' };
 const routeFromPath = path => { const clean = path.replace(/\/$/,'') || '/'; if (clean.startsWith('/product/')) return clean.split('/')[2] ? 'product' : 'notFound'; return Object.keys(ROUTES).find(key => ROUTES[key] === clean) || 'notFound'; };
 const read = (key, fallback) => readStore(key, fallback);
 export default function App() {
@@ -279,6 +280,7 @@ export default function App() {
  {page==='shop'&&<ShopPage products={filtered} categories={categories} category={category} setCategory={id=>{setCategory(id);setSubcategory('all');}} subcategory={subcategory} setSubcategory={setSubcategory} query={query} setQuery={setQuery} sort={sort} setSort={setSort} categoryName={categoryName} productCardProps={productCardProps}/>}
  {page==='product'&&(selectedProduct||displayProducts.find(p=>p.id===decodeURIComponent(window.location.pathname.split('/')[2]||'')))&&<ProductPage product={selectedProduct||displayProducts.find(p=>p.id===decodeURIComponent(window.location.pathname.split('/')[2]||''))} categoryName={categoryName} go={go} onAdd={addCart} isWished={(selectedProduct||displayProducts.find(p=>p.id===decodeURIComponent(window.location.pathname.split('/')[2]||''))) ? wishlist.includes((selectedProduct||displayProducts.find(p=>p.id===decodeURIComponent(window.location.pathname.split('/')[2]||''))).id) : false} onWish={toggleWishlist}/>}
  {page==='giftFinder'&&<GiftFinderPage products={products} categories={categories} go={go} openProduct={openProduct}/>}
+ {page==='customGift'&&<CustomGiftPage go={go}/>}
  {page==='services'&&<ServicesPage/>}
  {page==='about'&&<AboutPage go={go}/> }
  {page==='faq'&&<FAQPage go={go}/> }
