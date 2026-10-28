@@ -18,8 +18,6 @@ import {
 import { CATEGORY_IMAGES, SUBCATEGORIES } from "../data/catalog.js";
 import ProductCard from "../components/ProductCard.jsx";
 
-
-
 export default function HomePage({
   categories,
   products,
@@ -30,17 +28,31 @@ export default function HomePage({
   homeContent,
 }) {
   const featured = products.filter((p) => p.featured).slice(0, 4);
-  const testimonialTrack = useRef(null);
   const [testimonialPaused, setTestimonialPaused] = useState(false);
+  const [activeTestimonialIndex, setActiveTestimonialIndex] = useState(0);
   const [inspirationPaused, setInspirationPaused] = useState(false);
   const [inspirationProducts, setInspirationProducts] = useState([]);
   const inspirationTrack = useRef(null);
   const pickInspirationProducts = (source) => {
     const pool = (Array.isArray(source) ? source : []).filter((product) => {
       if (!product || product.id == null || !product.name) return false;
-      if (product.available === false || product.isAvailable === false || product.soldOut === true) return false;
-      if (product.status && /sold|unavailable|inactive|draft/i.test(String(product.status))) return false;
-      if (product.stock !== undefined && product.stock !== null && Number(product.stock) <= 0) return false;
+      if (
+        product.available === false ||
+        product.isAvailable === false ||
+        product.soldOut === true
+      )
+        return false;
+      if (
+        product.status &&
+        /sold|unavailable|inactive|draft/i.test(String(product.status))
+      )
+        return false;
+      if (
+        product.stock !== undefined &&
+        product.stock !== null &&
+        Number(product.stock) <= 0
+      )
+        return false;
       return true;
     });
     const shuffled = [...pool];
@@ -50,15 +62,6 @@ export default function HomePage({
     }
     return shuffled.slice(0, 12);
   };
-  const scrollTestimonials = (direction) => {
-    const track = testimonialTrack.current;
-    if (!track) return;
-    const card = track.querySelector(".home-testimonial-card");
-    const distance = card
-      ? card.getBoundingClientRect().width + 16
-      : track.clientWidth * 0.8;
-    track.scrollBy({ left: direction * distance, behavior: "smooth" });
-  };
   const testimonials = Array.isArray(homeContent?.testimonials)
     ? homeContent.testimonials.filter(
         (item) =>
@@ -67,50 +70,136 @@ export default function HomePage({
           String(item.quote || item.text || "").trim(),
       )
     : [];
-  // Show clearly-labelled starter examples until the shop has approved real customer reviews.
-  // These are illustrative placeholders, not claims about actual customer experiences.
-  const starterTestimonials = [
+  const hasRealTestimonials = testimonials.length > 0;
+  // Preview copy is useful while building the section, but must not be represented as verified customer feedback.
+  // Each preview quote has a matching image so the slide's visual and message stay in sync.
+  const sampleTestimonials = [
     {
-      id: "starter-thoughtful",
-      name: "A thoughtful gifting moment",
-      context: "Illustrative example",
+      id: "sample-mug",
+      name: "Mrs. Ruth",
+      context: "Gift inspiration",
       rating: 5,
       quote:
-        "The best gifts are the ones that make someone feel remembered, even when you cannot be there in person.",
+        "I wanted something a little different for someone special, and personalised gifts are such a lovely idea. It’s the little details that make a present more meaningful. I’d definitely recommend God First to anyone looking for a thoughtful gift.",
+      photo:
+        "https://images.unsplash.com/photo-1514228742587-6b1558f27a1c?auto=format&fit=crop&w=1200&q=90",
+      photoAlt: "Personalised ceramic mug gift",
+      photoLabel: "A personalised gift",
     },
     {
-      id: "starter-easy",
-      name: "A smoother gifting experience",
-      context: "Illustrative example",
+      id: "sample-birthday",
+      name: "Mr. Khan",
+      context: "Gift inspiration",
       rating: 5,
       quote:
-        "Choosing a gift should feel simple: find something meaningful, confirm the details, and let the shop help with the next steps.",
+        "Finding the right birthday gift can be stressful, especially when you want it to feel personal. I love having different gift ideas to choose from instead of settling for something ordinary. I’d recommend checking God First whenever you need a special present.",
+      photo:
+        "https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=1200&q=90",
+      photoAlt: "Beautifully wrapped birthday present",
+      photoLabel: "A birthday surprise",
     },
     {
-      id: "starter-special",
-      name: "Making the moment special",
-      context: "Illustrative example",
+      id: "sample-flowers",
+      name: "Mrs. Amina",
+      context: "Gift inspiration",
       rating: 5,
       quote:
-        "From birthdays to little just-because surprises, a carefully chosen gift can make an ordinary day feel special.",
+        "Sometimes you just want to remind someone how much they mean to you, even when there’s no special occasion. Flowers and thoughtful gifts are a beautiful way to do that. God First has the kind of gift ideas that make those little moments matter.",
+      photo: "/images/hero-flowers.jpeg",
+      photoAlt: "Bouquet of flowers",
+      photoLabel: "Flowers for someone special",
+    },
+    {
+      id: "sample-shirt",
+      name: "Mr. Daniel",
+      context: "Gift inspiration",
+      rating: 5,
+      quote:
+        "I love gifts that feel like they were chosen for one person and nobody else. Being able to personalise something with a name, message or special design makes the idea even better. I’d definitely recommend exploring the customised gift options.",
+      photo:
+        "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=90",
+      photoAlt: "Folded T-shirt representing a custom clothing gift",
+      photoLabel: "A gift made personal",
+    },
+    {
+      id: "sample-hamper",
+      name: "Mrs. Grace",
+      context: "Gift inspiration",
+      rating: 5,
+      quote:
+        "A gift hamper is such a nice way to make someone feel appreciated because there’s more than one little surprise to enjoy. I like the idea of putting together something thoughtful for birthdays, anniversaries or just to say thank you. It’s definitely a gift option I’d recommend.",
+      photo:
+        "https://images.unsplash.com/photo-1607083206968-13611e3d76db?auto=format&fit=crop&w=1200&q=90",
+      photoAlt: "Thoughtfully arranged gift hamper",
+      photoLabel: "A gift hamper",
+    },
+    {
+      id: "sample-gifting-experience",
+      name: "Miss Sarah",
+      context: "Gift inspiration",
+      rating: 5,
+      quote:
+        "There’s something special about finding a gift that says exactly what you want someone to know. I’d rather give something thoughtful than just buy something for the sake of it. God First is a lovely concept for anyone who wants to make their gifts feel more meaningful.",
+      photo:
+        "https://images.unsplash.com/photo-1513883049090-d0b7439799bf?auto=format&fit=crop&w=1200&q=90",
+      photoAlt: "Gift box with ribbon",
+      photoLabel: "A thoughtful surprise",
     },
   ];
-  const hasRealTestimonials = testimonials.length > 0;
   const displayTestimonials = (
-    hasRealTestimonials ? testimonials : starterTestimonials
+    hasRealTestimonials ? testimonials : sampleTestimonials
   ).slice(0, 6);
+  const activeTestimonial =
+    displayTestimonials[activeTestimonialIndex % displayTestimonials.length];
+  const reviewPhoto = (() => {
+    const supplied =
+      activeTestimonial.photo ||
+      activeTestimonial.photoURL ||
+      activeTestimonial.image;
+    if (supplied) return supplied;
+    const words =
+      `${activeTestimonial.title || ""} ${activeTestimonial.quote || activeTestimonial.text || ""} ${activeTestimonial.product || ""}`.toLowerCase();
+    if (/mug|cup|tumbler|flask|bottle/.test(words))
+      return "https://images.unsplash.com/photo-1514228742587-6b1558f27a1c?auto=format&fit=crop&w=900&q=85";
+    if (/shirt|hoodie|wear|t-shirt|tshirt/.test(words))
+      return "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=900&q=85";
+    if (/flower|rose|bouquet/.test(words)) return "/images/hero-flowers.jpeg";
+    if (/deliver|arriv|parcel|order|package/.test(words))
+      return "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=900&q=85";
+    if (/photo|memory|frame|picture/.test(words))
+      return "https://images.unsplash.com/photo-1607083206968-13611e3d76db?auto=format&fit=crop&w=900&q=85";
+    return "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=900&q=85";
+  })();
+  const reviewPhotoAlt =
+    activeTestimonial.photoAlt ||
+    activeTestimonial.photo_alt ||
+    activeTestimonial.imageAlt ||
+    (hasRealTestimonials
+      ? "Gift related to this customer review"
+      : "Gift idea matching this sample review");
+
+  useEffect(() => {
+    setActiveTestimonialIndex(0);
+  }, [testimonials.length]);
+
   useEffect(() => {
     if (testimonialPaused || displayTestimonials.length < 2) return;
     const timer = window.setInterval(() => {
-      const track = testimonialTrack.current;
-      if (!track) return;
-      const atEnd =
-        track.scrollLeft + track.clientWidth >= track.scrollWidth - 12;
-      if (atEnd) track.scrollTo({ left: 0, behavior: "smooth" });
-      else scrollTestimonials(1);
+      setActiveTestimonialIndex(
+        (current) => (current + 1) % displayTestimonials.length,
+      );
     }, 5200);
     return () => window.clearInterval(timer);
   }, [testimonialPaused, displayTestimonials.length]);
+
+  const changeTestimonial = (direction) => {
+    if (displayTestimonials.length < 2) return;
+    setActiveTestimonialIndex(
+      (current) =>
+        (current + direction + displayTestimonials.length) %
+        displayTestimonials.length,
+    );
+  };
   useEffect(() => {
     setInspirationProducts(pickInspirationProducts(products));
   }, [products]);
@@ -120,11 +209,14 @@ export default function HomePage({
     if (!track) return;
     const card = track.querySelector(".inspiration-slide");
     const gap = 16;
-    const distance = card ? card.getBoundingClientRect().width + gap : track.clientWidth * 0.8;
+    const distance = card
+      ? card.getBoundingClientRect().width + gap
+      : track.clientWidth * 0.8;
     const atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 8;
     const atStart = track.scrollLeft <= 8;
     if (direction > 0 && atEnd) track.scrollTo({ left: 0, behavior: "smooth" });
-    else if (direction < 0 && atStart) track.scrollTo({ left: track.scrollWidth, behavior: "smooth" });
+    else if (direction < 0 && atStart)
+      track.scrollTo({ left: track.scrollWidth, behavior: "smooth" });
     else track.scrollBy({ left: direction * distance, behavior: "smooth" });
   };
 
@@ -259,121 +351,140 @@ export default function HomePage({
       </section>
 
       <section
-        className="section container home-testimonials-section"
-        onMouseEnter={() => setTestimonialPaused(true)}
-        onMouseLeave={() => setTestimonialPaused(false)}
+        className="customer-review-feature"
+        id="customer-reviews"
+        aria-labelledby="customer-reviews-heading"
         onFocusCapture={() => setTestimonialPaused(true)}
-        onBlurCapture={(e) => {
-          if (!e.currentTarget.contains(e.relatedTarget))
+        onBlurCapture={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget))
             setTestimonialPaused(false);
         }}
       >
-        <div className="testimonial-heading-row">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">LOVE, DELIVERED</p>
-              <h2>Thoughtful moments, beautifully shared.</h2>
-              <p>
-                {hasRealTestimonials
-                  ? "Experiences shared by customers of God First Gift Shop."
-                  : "A glimpse of the thoughtful experience we aim to create with every gift."}
-              </p>
+        <div className="customer-review-feature-inner">
+          <div className="customer-review-feature-heading">
+            <p className="eyebrow">LOVE, DELIVERED</p>
+            <h2 id="customer-reviews-heading">
+              Kind words. Thoughtful moments.
+            </h2>
+            <p>
+              We want every gift to help someone feel remembered, appreciated
+              and loved.
+            </p>
+          </div>
+          <article className="customer-review-feature-card" aria-live="polite">
+            <div className="customer-review-feature-photo">
+              <img
+                key={activeTestimonial.id || activeTestimonialIndex}
+                src={reviewPhoto}
+                alt={reviewPhotoAlt}
+                loading="eager"
+                onError={(event) => {
+                  event.currentTarget.onerror = null;
+                  event.currentTarget.src = "/images/hero-flowers.jpeg";
+                }}
+              />
+              <span className="customer-review-photo-label">
+                <Gift size={14} />{" "}
+                {activeTestimonial.photoLabel || "A little something special"}
+              </span>
             </div>
-          </div>
-          <div className="testimonial-controls">
-            <button
-              type="button"
-              aria-label="Previous testimonials"
-              onClick={() => scrollTestimonials(-1)}
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <button
-              type="button"
-              aria-label="Next testimonials"
-              onClick={() => scrollTestimonials(1)}
-            >
-              <ChevronRight size={20} />
-            </button>
-          </div>
-        </div>
-        <div
-          className="home-testimonial-track"
-          ref={testimonialTrack}
-          aria-label="Testimonial carousel"
-        >
-          {displayTestimonials.map((item, index) => (
-            <article
-              className="home-testimonial-card"
-              key={item.id || `${item.name || "customer"}-${index}`}
-            >
-              <div className="testimonial-card-top">
-                <Quote className="home-testimonial-quote" size={27} />
+            <div className="customer-review-feature-copy">
+              <Quote
+                className="customer-review-feature-quote-icon"
+                size={32}
+                aria-hidden="true"
+              />
+              <p className="customer-review-feature-label">
+                {hasRealTestimonials ? "CUSTOMER REVIEW" : "THOUGHTFUL GIFTING"}
+              </p>
+              <blockquote>
+                {String(
+                  activeTestimonial.quote || activeTestimonial.text,
+                ).trim()}
+              </blockquote>
+              <div className="customer-review-feature-bottom">
+                <div className="customer-review-feature-person">
+                  <span className="customer-review-avatar">
+                    {String(activeTestimonial.name || "G")
+                      .trim()
+                      .charAt(0)
+                      .toUpperCase()}
+                  </span>
+                  <span>
+                    <b>{activeTestimonial.name || "God First Gift Shop"}</b>
+                    <small>
+                      {activeTestimonial.context ||
+                        activeTestimonial.location ||
+                        (hasRealTestimonials
+                          ? "God First Gift Shop customer"
+                          : "Gift inspiration for special moments")}
+                    </small>
+                  </span>
+                </div>
                 <div
-                  className="home-testimonial-stars"
-                  aria-label={`${Math.max(1, Math.min(5, Number(item.rating) || 5))} out of 5 stars`}
+                  className="customer-review-feature-rating"
+                  aria-label={`${Math.max(1, Math.min(5, Number(activeTestimonial.rating) || 5))} out of 5 stars`}
                 >
                   {Array.from(
                     {
                       length: Math.max(
                         1,
-                        Math.min(5, Number(item.rating) || 5),
+                        Math.min(5, Number(activeTestimonial.rating) || 5),
                       ),
                     },
                     (_, i) => (
-                      <Star key={i} size={14} fill="currentColor" />
+                      <Star key={i} size={15} fill="currentColor" />
                     ),
                   )}
                 </div>
               </div>
-              <p className="home-testimonial-text">
-                “{String(item.quote || item.text).trim()}”
-              </p>
-              <div className="home-testimonial-person">
-                {item.photo ? (
-                  <img src={item.photo} alt="" loading="lazy" />
-                ) : (
-                  <span>
-                    {String(item.name || "Customer")
-                      .trim()
-                      .charAt(0)
-                      .toUpperCase()}
+              {displayTestimonials.length > 1 && (
+                <div
+                  className="customer-review-feature-controls"
+                  aria-label="Review carousel controls"
+                >
+                  <span className="customer-review-feature-count">
+                    {activeTestimonialIndex + 1} / {displayTestimonials.length}
                   </span>
-                )}
-                <div>
-                  <b>{item.name || "Customer"}</b>
-                  <small>
-                    {item.context ||
-                      item.location ||
-                      (hasRealTestimonials
-                        ? "God First customer"
-                        : "Illustrative customer story")}
-                  </small>
+                  <div
+                    className="customer-review-feature-dots"
+                    role="group"
+                    aria-label="Choose a review"
+                  >
+                    {displayTestimonials.map((item, index) => (
+                      <button
+                        key={item.id || index}
+                        type="button"
+                        className={
+                          index === activeTestimonialIndex ? "is-active" : ""
+                        }
+                        aria-label={`Show review ${index + 1}`}
+                        aria-current={
+                          index === activeTestimonialIndex ? "true" : undefined
+                        }
+                        onClick={() => setActiveTestimonialIndex(index)}
+                      />
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="Previous review"
+                    onClick={() => changeTestimonial(-1)}
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Next review"
+                    onClick={() => changeTestimonial(1)}
+                  >
+                    <ChevronRight size={18} />
+                  </button>
                 </div>
-                {item.verifiedPurchase && (
-                  <span className="testimonial-verified">
-                    <PackageCheck size={13} /> Verified
-                  </span>
-                )}
-              </div>
-            </article>
-          ))}
+              )}
+            </div>
+          </article>
         </div>
-        <div className="testimonial-bottom-row">
-          <span className="testimonial-scroll-hint">
-            <ArrowLeft size={13} /> Swipe or use arrows to explore{" "}
-            <ArrowRight size={13} />
-          </span>
-          <button className="text-link" onClick={() => go("contact")}>
-            Share your experience <ArrowRight size={15} />
-          </button>
-        </div>
-        {!hasRealTestimonials && (
-          <p className="home-testimonial-disclaimer">
-            Illustrative examples only — these are not genuine customer reviews
-            or verified purchases.
-          </p>
-        )}
       </section>
 
       <section className="section container destination-section">
@@ -425,7 +536,8 @@ export default function HomePage({
         onMouseLeave={() => setInspirationPaused(false)}
         onFocusCapture={() => setInspirationPaused(true)}
         onBlurCapture={(event) => {
-          if (!event.currentTarget.contains(event.relatedTarget)) setInspirationPaused(false);
+          if (!event.currentTarget.contains(event.relatedTarget))
+            setInspirationPaused(false);
         }}
       >
         <div className="container">
@@ -433,9 +545,11 @@ export default function HomePage({
             <div>
               <p className="eyebrow">A LITTLE SOMETHING SPECIAL</p>
               <h2>A Little Something They’ll Love</h2>
-              <p>Fresh inspiration from our gift collection, picked for your next thoughtful surprise.</p>
+              <p>
+                Fresh inspiration from our gift collection, picked for your next
+                thoughtful surprise.
+              </p>
             </div>
-
           </div>
           {inspirationProducts.length > 0 ? (
             <div className="inspiration-carousel-viewport">
@@ -455,15 +569,36 @@ export default function HomePage({
             <div className="inspiration-empty">
               <Gift size={25} />
               <p>New gift ideas are being prepared.</p>
-              <button className="text-link" onClick={() => go("shop")}>Explore all gifts <ArrowRight size={15} /></button>
+              <button className="text-link" onClick={() => go("shop")}>
+                Explore all gifts <ArrowRight size={15} />
+              </button>
             </div>
           )}
           <div className="inspiration-footer">
-            <div className="inspiration-actions" aria-label="Carousel navigation">
-              <button type="button" className="inspiration-arrow" aria-label="Previous products" onClick={() => scrollInspiration(-1)}><ChevronLeft size={17} /></button>
-              <button type="button" className="inspiration-arrow" aria-label="Next products" onClick={() => scrollInspiration(1)}><ChevronRight size={17} /></button>
+            <div
+              className="inspiration-actions"
+              aria-label="Carousel navigation"
+            >
+              <button
+                type="button"
+                className="inspiration-arrow"
+                aria-label="Previous products"
+                onClick={() => scrollInspiration(-1)}
+              >
+                <ChevronLeft size={17} />
+              </button>
+              <button
+                type="button"
+                className="inspiration-arrow"
+                aria-label="Next products"
+                onClick={() => scrollInspiration(1)}
+              >
+                <ChevronRight size={17} />
+              </button>
             </div>
-            <button className="text-link" onClick={() => go("shop")}>Explore all gifts <ArrowRight size={15} /></button>
+            <button className="text-link" onClick={() => go("shop")}>
+              Explore all gifts <ArrowRight size={15} />
+            </button>
           </div>
         </div>
       </section>
