@@ -1,0 +1,17 @@
+GOD FIRST GIFT SHOP — REVIEW SECTION UPDATE
+
+This full project archive is based on the complete project ZIP supplied in this conversation.
+
+Review carousel updates:
+- Kept all six existing customer names and the existing testimonial carousel UI.
+- Updated the first three slides with the three customer photos and review wording supplied in the conversation (flowers, grocery delivery, teddy bear and rose necklace).
+- Updated the remaining three slides with the approved review copy for a gift hamper, birthday cake, and fruit basket.
+- Added local image assets under public/images so the carousel does not depend on remote image URLs for these six slides.
+- Did not intentionally redesign the homepage or modify unrelated pages and functionality.
+
+Names retained in slide order:
+Mrs. Ruth, Mr. Khan, Mrs. Amina, Mr. Daniel, Mrs. Grace, Miss Sarah.
+
+Note: The first three review texts/photos were supplied by the user. The last three review texts and product images are illustrative content created for the website and should not be represented as verified customer testimonials unless confirmed by the customers.
+
+Run `npm install` then `npm run dev` to test locally. This package has not been run through a full production build in this environment.

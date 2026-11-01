@@ -80,11 +80,10 @@ export default function HomePage({
       context: "Gift inspiration",
       rating: 5,
       quote:
-        "I wanted something a little different for someone special, and personalised gifts are such a lovely idea. It’s the little details that make a present more meaningful. I’d definitely recommend God First to anyone looking for a thoughtful gift.",
-      photo:
-        "https://images.unsplash.com/photo-1514228742587-6b1558f27a1c?auto=format&fit=crop&w=1200&q=90",
-      photoAlt: "Personalised ceramic mug gift",
-      photoLabel: "A personalised gift",
+        "Absolutely beautiful flowers! 💐🌹 The flowers arrived fresh, gorgeous, and perfectly arranged. The quality exceeded my expectations, and the delivery was smooth and timely. Every detail was handled with care and love. Highly recommended for anyone looking to brighten someone's day with beautiful fresh-cut flowers. Excellent service! ❤️🌸",
+      photo: "/images/review-flowers.jpeg",
+      photoAlt: "Customer photo of a fresh pink and yellow flower bouquet with a gift card",
+      photoLabel: "Fresh flower bouquet",
     },
     {
       id: "sample-birthday",
@@ -92,11 +91,10 @@ export default function HomePage({
       context: "Gift inspiration",
       rating: 5,
       quote:
-        "Finding the right birthday gift can be stressful, especially when you want it to feel personal. I love having different gift ideas to choose from instead of settling for something ordinary. I’d recommend checking God First whenever you need a special present.",
-      photo:
-        "https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=1200&q=90",
-      photoAlt: "Beautifully wrapped birthday present",
-      photoLabel: "A birthday surprise",
+        'Beautifully packaged, delicious, fresh, and delivered right on time. Absolutely worth every penny! Excellent service. Highly recommended.',
+      photo: "/images/review-grocery-delivery.jpeg",
+      photoAlt: "Customer photo of a grocery and food delivery order",
+      photoLabel: "Grocery delivery",
     },
     {
       id: "sample-flowers",
@@ -104,10 +102,10 @@ export default function HomePage({
       context: "Gift inspiration",
       rating: 5,
       quote:
-        "Sometimes you just want to remind someone how much they mean to you, even when there’s no special occasion. Flowers and thoughtful gifts are a beautiful way to do that. God First has the kind of gift ideas that make those little moments matter.",
-      photo: "/images/hero-flowers.jpeg",
-      photoAlt: "Bouquet of flowers",
-      photoLabel: "Flowers for someone special",
+        'Absolutely beautiful! The teddy bear and rose necklace were delivered perfectly. Such a lovely, thoughtful gift, beautifully presented and worth every penny. Excellent quality, fast delivery, and amazing service. Highly recommended! ❤️🌹🧸',
+      photo: "/images/review-teddy-rose.jpeg",
+      photoAlt: "Customer photo of a red teddy bear and rose necklace gift set",
+      photoLabel: "Teddy bear and rose gift",
     },
     {
       id: "sample-shirt",
@@ -115,11 +113,11 @@ export default function HomePage({
       context: "Gift inspiration",
       rating: 5,
       quote:
-        "I love gifts that feel like they were chosen for one person and nobody else. Being able to personalise something with a name, message or special design makes the idea even better. I’d definitely recommend exploring the customised gift options.",
+        "The gift hamper was absolutely amazing! Everything was neatly packaged, high-quality, and exactly as described. It made the birthday surprise extra special. The delivery was fast and hassle-free. I’m really impressed. Highly recommended! ❤️",
       photo:
-        "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=90",
-      photoAlt: "Folded T-shirt representing a custom clothing gift",
-      photoLabel: "A gift made personal",
+        "/images/review-gift-hamper.webp",
+      photoAlt: "Premium birthday gift hamper with perfume, wallet, watch, mug and chocolates",
+      photoLabel: "Birthday gift hamper",
     },
     {
       id: "sample-hamper",
@@ -127,11 +125,11 @@ export default function HomePage({
       context: "Gift inspiration",
       rating: 5,
       quote:
-        "A gift hamper is such a nice way to make someone feel appreciated because there’s more than one little surprise to enjoy. I like the idea of putting together something thoughtful for birthdays, anniversaries or just to say thank you. It’s definitely a gift option I’d recommend.",
+        "The cake was stunning and delicious! 🎂 It looked exactly like the picture, was fresh, rich, and perfectly made for the occasion. Delivery was on time and the packaging kept it in great condition. Excellent service all round!",
       photo:
-        "https://images.unsplash.com/photo-1607083206968-13611e3d76db?auto=format&fit=crop&w=1200&q=90",
-      photoAlt: "Thoughtfully arranged gift hamper",
-      photoLabel: "A gift hamper",
+        "/images/review-birthday-cake.webp",
+      photoAlt: "Chocolate birthday cake with strawberries and a Happy Birthday topper",
+      photoLabel: "Birthday cake",
     },
     {
       id: "sample-gifting-experience",
@@ -139,11 +137,11 @@ export default function HomePage({
       context: "Gift inspiration",
       rating: 5,
       quote:
-        "There’s something special about finding a gift that says exactly what you want someone to know. I’d rather give something thoughtful than just buy something for the sake of it. God First is a lovely concept for anyone who wants to make their gifts feel more meaningful.",
+        "I ordered a fruit basket for a friend and it was perfect! The fruits were fresh, colorful, and beautifully arranged. My friend loved it so much! The whole process was easy, and the delivery was right on time. I’ll definitely be ordering again. ❤️",
       photo:
-        "https://images.unsplash.com/photo-1513883049090-d0b7439799bf?auto=format&fit=crop&w=1200&q=90",
-      photoAlt: "Gift box with ribbon",
-      photoLabel: "A thoughtful surprise",
+        "/images/review-fruit-basket.webp",
+      photoAlt: "Fresh fruit basket wrapped with clear cellophane and a red ribbon",
+      photoLabel: "Fresh fruit basket",
     },
   ];
   const displayTestimonials = (
