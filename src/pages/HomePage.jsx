@@ -26,6 +26,7 @@ export default function HomePage({
   openCategory,
   productCardProps,
   homeContent,
+  user,
 }) {
   const featured = products.filter((p) => p.featured).slice(0, 4);
   const [testimonialPaused, setTestimonialPaused] = useState(false);
@@ -304,6 +305,17 @@ export default function HomePage({
           <i />
           <span>THOUGHTFUL GIFTING, MADE EASIER</span>
         </div>
+      </section>
+
+      <section className="regional-currency-prompt container" aria-label="Set your shopping currency">
+        <div className="regional-currency-prompt-icon"><Globe2 size={20}/></div>
+        <div className="regional-currency-prompt-copy">
+          <strong>Shopping from another country?</strong>
+          <span>{user ? 'Set your home country in your account to see prices in your local currency.' : 'Sign in and set your home country in your account to see prices in your local currency.'}</span>
+        </div>
+        <button type="button" className="regional-currency-prompt-link" onClick={() => go("account")}>
+          {user ? 'Set my country' : 'Sign in & set country'} <ArrowRight size={15}/>
+        </button>
       </section>
 
       <section
@@ -629,8 +641,8 @@ export default function HomePage({
       <section className="home-service-band container">
         <div className="service-band-image">
           <img
-            src="https://images.unsplash.com/photo-1607083206968-13611e3d76db?auto=format&fit=crop&w=1000&q=85"
-            alt="Thoughtfully prepared gifts"
+            src="/images/gift-order-banner.jpeg"
+            alt="Gift Shop Worldwide — gifts and order now"
             loading="lazy"
           />
         </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Heart, ShoppingBag, ArrowUpRight } from 'lucide-react';
 import { money } from '../data/catalog.js';
+import { displayPrice } from '../lib/currency.js';
 
 export default function ProductCard({ product, categoryName, onOpen, onAdd, isWished, onWish, isCompared, onCompare }) {
   const badge = product.autoBadge !== undefined ? product.autoBadge : (product.promotionLabel || product.tag || '');
@@ -18,7 +19,7 @@ export default function ProductCard({ product, categoryName, onOpen, onAdd, isWi
     <div className="product-info">
       <p className="eyebrow">{categoryName(product.category)}</p>
       <a className="product-name product-name-button product-name-link" href={`/product/${encodeURIComponent(product.id)}`} onClick={event => { if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return; event.preventDefault(); onOpen(product); }}>{product.name}</a>
-      <div className="price-row"><strong>{money(product.price)}</strong>{product.oldPrice > product.price && <del>{money(product.oldPrice)}</del>}</div>
+      <div className="price-row"><strong>{displayPrice(product.price)}</strong>{product.oldPrice > product.price && <del>{displayPrice(product.oldPrice)}</del>}</div>
       <div className="product-card-actions"><button className="add-btn" onClick={() => onAdd(product)} disabled={Number(product.stock) <= 0}><ShoppingBag size={15}/>{Number(product.stock) <= 0 ? 'Out of stock' : 'Add to bag'}</button></div>
     </div>
   </article>;
